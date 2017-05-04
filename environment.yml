@@ -1,0 +1,13 @@
+name: env_fast_ai
+dependencies:
+  - python=3.6.1
+  - bcolz
+  - matplotlib
+  - nomkl
+  - numpy
+  - pandas
+  - pip
+  - theano
+  - pip:
+    - keras
+    - tensorflow
