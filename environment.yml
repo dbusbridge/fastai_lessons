@@ -11,5 +11,5 @@ dependencies:
   - theano
   - pip:
     - image
-    - keras
+    - keras==1.2.2
     - tensorflow
