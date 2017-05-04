@@ -23,12 +23,11 @@ def vgg_preprocess(x):
     return x[:, ::-1] # reverse axis rgb->bgr
 
 
-class Vgg16():
-    """The VGG 16 Imagenet model"""
-
-    def __init__(self):
+class Vgg16BN():
+    """The VGG 16 Imagenet model with Batch Normalization for the Dense Layers"""
+    def __init__(self, size=(224,224), include_top=True):
         self.FILE_PATH = './downloaded/models/'
-        self.create()
+        self.create(size, include_top)
         self.get_classes()
 
     def get_classes(self):
@@ -55,11 +54,15 @@ class Vgg16():
     def FCBlock(self):
         model = self.model
         model.add(Dense(4096, activation='relu'))
+        model.add(BatchNormalization())
         model.add(Dropout(0.5))
 
-    def create(self):
+    def create(self, size, include_top):
+        if size != (224,224):
+            include_top=False
+
         model = self.model = Sequential()
-        model.add(Lambda(vgg_preprocess, input_shape=(3,224,224), output_shape=(3,224,224)))
+        model.add(Lambda(vgg_preprocess, input_shape=(3,)+size, output_shape=(3,)+size))
 
         self.ConvBlock(2, 64)
         self.ConvBlock(2, 128)
@@ -67,12 +70,17 @@ class Vgg16():
         self.ConvBlock(3, 512)
         self.ConvBlock(3, 512)
 
+        if not include_top:
+            fname = 'vgg16_bn_conv.h5'
+            model.load_weights(self.FILE_PATH + fname)
+            return
+
         model.add(Flatten())
         self.FCBlock()
         self.FCBlock()
         model.add(Dense(1000, activation='softmax'))
 
-        fname = 'vgg16.h5'
+        fname = 'vgg16_bn.h5'
         model.load_weights(self.FILE_PATH + fname)
 
     def get_batches(self, path, gen=image.ImageDataGenerator(), shuffle=True, batch_size=8, class_mode='categorical'):
@@ -87,11 +95,11 @@ class Vgg16():
         self.compile()
 
     def finetune(self, batches):
-        self.ft(batches.nb_class)
-        classes = list(iter(batches.class_indices))
-        for c in batches.class_indices:
-            classes[batches.class_indices[c]] = c
-        self.classes = classes
+        model = self.model
+        model.pop()
+        for layer in model.layers: layer.trainable=False
+        model.add(Dense(batches.nb_class, activation='softmax'))
+        self.compile()
 
     def compile(self, lr=0.001):
         self.model.compile(optimizer=Adam(lr=lr),

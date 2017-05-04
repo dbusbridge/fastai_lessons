@@ -2,6 +2,7 @@ name: env_fast_ai
 dependencies:
   - python=3.6.1
   - bcolz
+  - h5py
   - matplotlib
   - nomkl
   - numpy
