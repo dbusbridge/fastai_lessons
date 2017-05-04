@@ -9,5 +9,6 @@ dependencies:
   - pip
   - theano
   - pip:
+    - image
     - keras
     - tensorflow
